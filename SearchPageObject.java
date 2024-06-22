@@ -2,15 +2,19 @@ package lib.ui;
 
 import io.appium.java_client.AppiumDriver;
 import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class SearchPageObject extends MainPageObject{
     private static final String
     SEARCH_INIT_ELEMENT = "//*[contains(@text, 'Search Wikipedia')]",
     SEARCH_INPUT = "//android.widget.AutoCompleteTextView[@resource-id='org.wikipedia:id/search_src_text']",
     SEARCH_CANCEL_BUTTON = "org.wikipedia:id/search_close_btn",
-    SEARCH_RESULT_BY_SUBSTRING_TPL = "//*[@resource-id='org.wikipedia:id/search_results_list']//*[@text='{SUBSTRING}']",
+    SEARCH_RESULT_BY_SUBSTRING_TPL = "//*[@resource-id='org.wikipedia:id/search_results_list']//*[@text='{SUB}']",
     SEARCH_RESULT_ELEMENT = "//*[@resource-id='org.wikipedia:id/search_results_list']//*[@resource-id='org.wikipedia:id/page_list_item_title']",
-    SEARCH_EMPTY_RESULT_ELEMENT = "//*[@text='No results']";
+    SEARCH_EMPTY_RESULT_ELEMENT = "//*[@text='No results']",
+    SEARCH_ARTICLE_BY_TWO_LOCATORS = "//*[@resource-id='org.wikipedia:id/search_results_list']//*[contains(@text, '{SUBSTRING1}')][contains(@text,'{SUBSTRING2}')]";
 
     public SearchPageObject(AppiumDriver driver) {
         super(driver);
@@ -18,8 +22,14 @@ public class SearchPageObject extends MainPageObject{
 
     /* TEMPLATES METHODS */
     private static String getResultSearchElement(String substring) {
-        return SEARCH_RESULT_BY_SUBSTRING_TPL.replace("{SUBSTRING}", substring);
+        return SEARCH_RESULT_BY_SUBSTRING_TPL.replace("{SUB}", substring);
     }
+
+    public static String getResultSearchElementByTwoLocators(String title, String description) {
+        String locator =  SEARCH_ARTICLE_BY_TWO_LOCATORS.replace("{SUBSTRING1}", title).replace("{SUBSTRING2}", description);
+        return locator;
+    }
+
     /* TEMPLATES METHODS */
 
     public void initSearchInput() {
@@ -69,6 +79,19 @@ public class SearchPageObject extends MainPageObject{
 
     public int getCountOfArticles() {
         return this.countOfArticles(By.xpath(SEARCH_RESULT_ELEMENT), 15);
+    }
+
+    public WebElement waitForElementByTitleAndDescription(String title, String description, long timeout) {
+        String locator = getResultSearchElementByTwoLocators(title, description);
+        WebDriverWait wait = new WebDriverWait(driver, timeout);
+        wait.withMessage("Cannot find element by two locators");
+        return wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(locator)));
+    }
+
+    public int getCountOfArticlesByTitleAndSubtitle(String title, String description, long timeout) {
+        String locator = getResultSearchElementByTwoLocators(title, description);
+        return this.countOfArticles(By.xpath(locator), 15);
+
     }
 
 }
